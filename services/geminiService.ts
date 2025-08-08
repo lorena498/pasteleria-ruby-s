@@ -2,16 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Product } from '../types';
 
-// IMPORTANT: Do NOT expose the API key in the frontend in a real production app.
-// This is for demonstration purposes only. In a real app, this call should be
-// made from a secure backend server.
 const API_KEY = process.env.API_KEY;
-
-if (!API_KEY) {
-  console.error("API_KEY no encontrada. Asegúrate de que la variable de entorno API_KEY esté configurada.");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
 
 const responseSchema = {
     type: Type.OBJECT,
@@ -50,9 +41,14 @@ export const getChatbotResponse = async (
   generalContext: string
 ): Promise<{ text: string; productIds: string[] }> => {
   if (!API_KEY) {
-     return { text: "Lo siento, el servicio de chat no está disponible en este momento. La clave API no está configurada.", productIds: [] };
+     console.error("API_KEY no encontrada. Asegúrate de que la variable de entorno API_KEY esté configurada en tu entorno de despliegue (ej. Vercel).");
+     return { text: "Lo siento, el servicio de chat no está disponible en este momento. La configuración del servidor parece estar incompleta.", productIds: [] };
   }
   
+  // Initialize the AI client here, only when it's actually needed.
+  // This prevents the entire app from crashing if the API_KEY is missing.
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
+
   // Update product context based on the latest data
   const dynamicProductInfo = productContext.map(p => `- ID: ${p.id}, Nombre: ${p.name}, Precio: $${p.price.toFixed(2)} MXN, Descripción: ${p.description}`).join('\n');
   const fullContext = `${generalContext}\n\nListado de productos actual con sus IDs:\n${dynamicProductInfo}`;
